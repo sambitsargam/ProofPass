@@ -1,11 +1,14 @@
 'use client'
 
+import { useRouter } from 'next/navigation'
 import Link from 'next/link'
 
 export default function Home() {
-  const handleDemo = async () => {
-    // Placeholder for demo flow
-    alert('Demo flow - Redirect to AIR Kit login')
+  const router = useRouter()
+
+  const handleDemo = () => {
+    // Redirect to AIR Kit login for demo flow
+    router.push('/login')
   }
 
   return (

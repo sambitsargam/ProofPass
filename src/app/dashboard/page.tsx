@@ -13,89 +13,69 @@ interface Credential {
   status: string
 }
 
-interface Ticket {
-  id: string
-  eventName: string
-  date: string
-  location: string
-  seatNumber: string
-  status: string
-}
-
 export default function DashboardPage() {
   const [credentials, setCredentials] = useState<Credential[]>([])
-  const [tickets, setTickets] = useState<Ticket[]>([])
   const [loading, setLoading] = useState(true)
   const [userAddress, setUserAddress] = useState<string>('')
+  const [error, setError] = useState<string | null>(null)
 
   useEffect(() => {
     const loadDashboard = async () => {
       try {
-        // Get user from localStorage
+        // Get real user from localStorage
         const userStr = localStorage.getItem('proofpass_user')
-        if (userStr) {
-          const user = JSON.parse(userStr)
-          setUserAddress(user.walletAddress)
+        if (!userStr) {
+          setError('No user session found. Please login first.')
+          setLoading(false)
+          return
         }
 
-        // Mock credentials
-        const mockCredentials: Credential[] = [
-          {
-            id: 'cred_001',
-            type: 'HUMAN_VERIFIED',
-            issuer: 'AIR Kit',
-            holder: userAddress || '0x1234...5678',
-            issuedAt: '2024-10-15',
-            expiresAt: '2025-10-15',
-            status: 'active',
-          },
-          {
-            id: 'cred_002',
-            type: 'FAN_BADGE',
-            issuer: 'ProofPass',
-            holder: userAddress || '0x1234...5678',
-            issuedAt: '2024-09-20',
-            expiresAt: '2025-09-20',
-            status: 'active',
-          },
-        ]
+        const user = JSON.parse(userStr)
+        setUserAddress(user.walletAddress)
 
-        // Mock tickets
-        const mockTickets: Ticket[] = [
-          {
-            id: 'ticket_001',
-            eventName: 'Web3 Summit 2024',
-            date: '2024-12-15',
-            location: 'San Francisco, CA',
-            seatNumber: '201A',
-            status: 'valid',
-          },
-          {
-            id: 'ticket_002',
-            eventName: 'NFT Art Showcase',
-            date: '2024-12-20',
-            location: 'New York, NY',
-            seatNumber: 'VIP-05',
-            status: 'valid',
-          },
-        ]
+        // Get real credentials from user session
+        const realCredentials: Credential[] = (user.credentials || []).map(
+          (cred: any) => ({
+            id: cred.id,
+            type: cred.type,
+            issuer: cred.issuer,
+            holder: user.walletAddress,
+            issuedAt: new Date(cred.issuedAt * 1000).toLocaleDateString(),
+            expiresAt: new Date(cred.expiresAt * 1000).toLocaleDateString(),
+            status: cred.status,
+          })
+        )
 
-        setCredentials(mockCredentials)
-        setTickets(mockTickets)
-      } catch (error) {
-        console.error('Failed to load dashboard:', error)
+        setCredentials(realCredentials)
+        setError(null)
+      } catch (err) {
+        const message =
+          err instanceof Error ? err.message : 'Failed to load dashboard'
+        setError(message)
+        console.error('Dashboard load error:', err)
       } finally {
         setLoading(false)
       }
     }
 
     loadDashboard()
-  }, [userAddress])
+  }, [])
 
   if (loading) {
     return (
       <div className="py-20 text-center">
         <p className="text-gray-400">Loading dashboard...</p>
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="py-20 text-center space-y-4">
+        <p className="text-red-400">{error}</p>
+        <a href="/login" className="btn-primary inline-block">
+          Go to Login
+        </a>
       </div>
     )
   }
@@ -117,16 +97,16 @@ export default function DashboardPage() {
           <p className="text-4xl font-bold">{credentials.length}</p>
         </div>
         <div className="card p-6 space-y-2">
-          <p className="text-sm text-gray-400">Valid Tickets</p>
-          <p className="text-4xl font-bold">{tickets.length}</p>
-        </div>
-        <div className="card p-6 space-y-2">
-          <p className="text-sm text-gray-400">Human Verified</p>
+          <p className="text-sm text-gray-400">Verified Status</p>
           <p className="text-4xl font-bold text-green-400">✓</p>
         </div>
         <div className="card p-6 space-y-2">
           <p className="text-sm text-gray-400">Fraud Risk</p>
           <p className="text-4xl font-bold text-green-400">Low</p>
+        </div>
+        <div className="card p-6 space-y-2">
+          <p className="text-sm text-gray-400">Member Since</p>
+          <p className="text-lg font-bold">Today</p>
         </div>
       </div>
 
@@ -134,7 +114,7 @@ export default function DashboardPage() {
       <div className="space-y-4">
         <div className="flex justify-between items-center">
           <h2 className="text-2xl font-bold">My Credentials</h2>
-          <button className="btn-primary text-sm">Verify Humanity</button>
+          <button className="btn-primary text-sm">Renew Verification</button>
         </div>
         {credentials.length > 0 ? (
           <div className="grid md:grid-cols-2 gap-4">
@@ -149,44 +129,19 @@ export default function DashboardPage() {
         )}
       </div>
 
-      {/* My Tickets */}
+      {/* Quick Actions */}
       <div className="space-y-4">
-        <div className="flex justify-between items-center">
-          <h2 className="text-2xl font-bold">My Tickets</h2>
-          <button className="btn-primary text-sm">Browse Events</button>
+        <h2 className="text-2xl font-bold">Quick Actions</h2>
+        <div className="grid md:grid-cols-2 gap-4">
+          <a href="/events" className="card p-6 hover:border-primary/50 transition">
+            <p className="text-lg font-bold">🎫 Browse Events</p>
+            <p className="text-sm text-gray-400 mt-2">Discover verified events</p>
+          </a>
+          <a href="/buy-tickets" className="card p-6 hover:border-primary/50 transition">
+            <p className="text-lg font-bold">🛍️ Buy Tickets</p>
+            <p className="text-sm text-gray-400 mt-2">Purchase with your credentials</p>
+          </a>
         </div>
-        {tickets.length > 0 ? (
-          <div className="grid md:grid-cols-2 gap-4">
-            {tickets.map((ticket) => (
-              <div key={ticket.id} className="card hover:border-primary/50 transition p-6 space-y-4">
-                <div className="flex justify-between items-start">
-                  <div>
-                    <h3 className="text-lg font-bold">{ticket.eventName}</h3>
-                    <p className="text-sm text-gray-400">{ticket.location}</p>
-                  </div>
-                  <span className="px-3 py-1 rounded-full bg-green-500/20 text-green-400 text-xs font-semibold">
-                    {ticket.status.toUpperCase()}
-                  </span>
-                </div>
-                <div className="grid grid-cols-2 gap-4 text-sm">
-                  <div>
-                    <p className="text-gray-400">Date</p>
-                    <p className="font-semibold">{ticket.date}</p>
-                  </div>
-                  <div>
-                    <p className="text-gray-400">Seat</p>
-                    <p className="font-semibold">{ticket.seatNumber}</p>
-                  </div>
-                </div>
-                <button className="w-full btn-outline py-2 text-sm">View QR Code</button>
-              </div>
-            ))}
-          </div>
-        ) : (
-          <div className="card p-8 text-center text-gray-400">
-            <p>No tickets yet. Browse and purchase verified event tickets.</p>
-          </div>
-        )}
       </div>
     </div>
   )

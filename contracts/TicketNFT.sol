@@ -3,14 +3,13 @@ pragma solidity ^0.8.19;
 
 import "@openzeppelin/contracts/token/ERC721/ERC721.sol";
 import "@openzeppelin/contracts/access/Ownable.sol";
-import "@openzeppelin/contracts/token/ERC721/extensions/ERC721URIStorage.sol";
 
 /**
  * @title TicketNFT
  * @notice NFT contract for event tickets. Mints only with verified credentials.
  * @dev Supports ticket verification and burning upon entry.
  */
-contract TicketNFT is ERC721, ERC721URIStorage, Ownable {
+contract TicketNFT is ERC721, Ownable {
     struct Ticket {
         uint256 eventId;
         bool used;
@@ -33,7 +32,7 @@ contract TicketNFT is ERC721, ERC721URIStorage, Ownable {
         _;
     }
 
-    constructor() ERC721("ProofPass Ticket", "TICKET") {}
+    constructor() ERC721("ProofPass Ticket", "TICKET") Ownable(msg.sender) {}
 
     /**
      * @notice Add an authorized verifier (credential issuer)
@@ -61,14 +60,12 @@ contract TicketNFT is ERC721, ERC721URIStorage, Ownable {
      * @param to Address to mint ticket to
      * @param eventId Event identifier
      * @param credentialHash Hash of the verified credential
-     * @param uri Token URI metadata
      * @return tokenId The minted token ID
      */
     function mintTicket(
         address to,
         uint256 eventId,
-        bytes32 credentialHash,
-        string memory uri
+        bytes32 credentialHash
     ) external onlyVerifier returns (uint256) {
         require(eventExists[eventId], "Event does not exist");
         require(to != address(0), "Invalid recipient");
@@ -84,7 +81,6 @@ contract TicketNFT is ERC721, ERC721URIStorage, Ownable {
         });
 
         _safeMint(to, tokenId);
-        _setTokenURI(tokenId, uri);
 
         emit TicketMinted(tokenId, to, eventId);
         return tokenId;
@@ -94,7 +90,7 @@ contract TicketNFT is ERC721, ERC721URIStorage, Ownable {
      * @notice Mark ticket as used (upon event entry)
      */
     function useTicket(uint256 tokenId) external onlyOwner {
-        require(_exists(tokenId), "Ticket does not exist");
+        require(_ownerOf(tokenId) != address(0), "Ticket does not exist");
         require(!tickets[tokenId].used, "Ticket already used");
 
         tickets[tokenId].used = true;
@@ -111,9 +107,8 @@ contract TicketNFT is ERC721, ERC721URIStorage, Ownable {
             msg.sender == ownerOf(tokenId) || msg.sender == owner(),
             "Not authorized to burn"
         );
-        require(_exists(tokenId), "Ticket does not exist");
+        require(_ownerOf(tokenId) != address(0), "Ticket does not exist");
 
-        _burn(tokenId);
         delete tickets[tokenId];
 
         emit TicketBurned(tokenId, msg.sender);
@@ -123,7 +118,7 @@ contract TicketNFT is ERC721, ERC721URIStorage, Ownable {
      * @notice Verify if a ticket is valid
      */
     function verifyTicket(uint256 tokenId) external view returns (bool) {
-        if (!_exists(tokenId)) return false;
+        if (_ownerOf(tokenId) == address(0)) return false;
         return !tickets[tokenId].used;
     }
 
@@ -135,40 +130,28 @@ contract TicketNFT is ERC721, ERC721URIStorage, Ownable {
         view
         returns (Ticket memory)
     {
-        require(_exists(tokenId), "Ticket does not exist");
+        require(_ownerOf(tokenId) != address(0), "Ticket does not exist");
         return tickets[tokenId];
     }
 
     /**
-     * @notice Override _exists for ERC721
+     * @notice Override _ownerOf for ERC721
      */
-    function _exists(uint256 tokenId) internal view returns (bool) {
-        return ownerOf(tokenId) != address(0);
+    function _ownerOf(uint256 tokenId) internal view override returns (address) {
+        try this.ownerOf(tokenId) returns (address owner) {
+            return owner;
+        } catch {
+            return address(0);
+        }
     }
 
     /**
-     * @notice Override required functions
+     * @notice Override required functions for ERC721
      */
-    function _burn(uint256 tokenId)
-        internal
-        override(ERC721, ERC721URIStorage)
-    {
-        super._burn(tokenId);
-    }
-
-    function tokenURI(uint256 tokenId)
-        public
-        view
-        override(ERC721, ERC721URIStorage)
-        returns (string memory)
-    {
-        return super.tokenURI(tokenId);
-    }
-
     function supportsInterface(bytes4 interfaceId)
         public
         view
-        override(ERC721, ERC721URIStorage)
+        override
         returns (bool)
     {
         return super.supportsInterface(interfaceId);

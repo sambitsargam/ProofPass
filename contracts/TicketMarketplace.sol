@@ -107,8 +107,7 @@ contract TicketMarketplace {
             uint256 tokenId = ticketNFT.mintTicket(
                 msg.sender,
                 _eventId,
-                _credentialHash,
-                _uris[i]
+                _credentialHash
             );
             tokenIds[i] = tokenId;
         }

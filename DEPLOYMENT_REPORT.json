@@ -1,0 +1,18 @@
+{
+  "timestamp": "2025-10-19T10:18:01.041Z",
+  "network": "Moca Chain Testnet",
+  "chainId": 222888,
+  "rpcUrl": "https://testnet-rpc.mocachain.org/",
+  "deployer": "0x90D9CD66FAdFF1C2Ba32C99A47C76532d08A704B",
+  "contracts": {
+    "TicketNFT": {
+      "address": "0x7ef74176b51b13e8753c1ca5055da870a5ec63f2",
+      "txHash": "0x086913b8397df0a2a53d2f54f2c8fa0b17d9b99fc6ba73f69ee71ea1d0db105a"
+    },
+    "TicketMarketplace": {
+      "address": "0x88f155b4e2e95dbcccec21ead02a77adc88432ef",
+      "txHash": "0xac7628740221a9d28cc1933472db9ed8090bf0e7e1b30b99773efa0f630ab108"
+    }
+  },
+  "blockExplorer": "https://testnet-scan.mocachain.org/"
+}

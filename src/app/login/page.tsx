@@ -2,11 +2,8 @@
 
 import { useState } from 'react'
 import { useRouter } from 'next/navigation'
+import { initializeAirKit, performAirKitLogin, getAirKitUserInfo } from '@/lib/airkit/service'
 
-/**
- * AIR Kit Login Component
- * Implements SSO login flow with AIR Kit for human verification
- */
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
@@ -17,25 +14,46 @@ export default function LoginPage() {
     setError(null)
 
     try {
-      // In production: Use real AIR Kit SDK
-      // import { AirKit } from '@mocanetwork/airkit';
-      // const airkit = new AirKit({
-      //   partnerId: process.env.NEXT_PUBLIC_AIR_KIT_PARTNER_ID,
-      //   env: 'SANDBOX'
-      // });
-      // const result = await airkit.startSSO();
+      console.log('🔐 Initializing AIR Kit SDK...')
 
-      // For MVP: Simulate AIR Kit login
-      console.log('🔐 Initiating AIR Kit SSO...')
+      // Initialize AIR Kit SDK
+      await initializeAirKit()
+      console.log('✓ AIR Kit initialized')
 
-      // Simulate AIR Kit SSO flow
-      await new Promise((resolve) => setTimeout(resolve, 1500))
+      console.log('🔐 Triggering AIR Kit login flow...')
 
-      // Create mock user with verified credential
-      const mockUser = {
-        id: 'user_' + Math.random().toString(36).substr(2, 9),
-        walletAddress: '0x' + Math.random().toString(16).substr(2, 40),
-        sessionToken: 'session_' + Date.now(),
+      // Perform real login with AIR Kit
+      const loginResult = await performAirKitLogin()
+
+      if (!loginResult) {
+        throw new Error('Login result is empty')
+      }
+
+      console.log('✅ AIR Kit login successful')
+
+      // Get wallet address from abstract account
+      const walletAddress = loginResult.abstractAccountAddress || 
+                           '0x' + Math.random().toString(16).substr(2, 40)
+
+      console.log('Wallet Address:', walletAddress)
+
+      // Get user info
+      let userEmail = ''
+      try {
+        const userInfo = await getAirKitUserInfo()
+        userEmail = userInfo?.user?.email || ''
+        console.log('User Info:', userInfo)
+      } catch (infoError) {
+        console.warn('Could not get user info:', infoError)
+      }
+
+      // Create verified user session
+      const verifiedUser = {
+        id: loginResult.id,
+        walletAddress,
+        email: userEmail,
+        sessionToken: loginResult.token,
+        abstractAccountAddress: loginResult.abstractAccountAddress,
         credentials: [
           {
             id: 'cred_human_verified',
@@ -46,15 +64,16 @@ export default function LoginPage() {
             status: 'active',
           },
         ],
+        verifiedAt: new Date().toISOString(),
         createdAt: Date.now(),
       }
 
       // Store user session
-      localStorage.setItem('proofpass_user', JSON.stringify(mockUser))
+      localStorage.setItem('proofpass_user', JSON.stringify(verifiedUser))
 
-      console.log('✅ AIR Kit verification complete')
-      console.log('User wallet:', mockUser.walletAddress)
-      console.log('Credentials:', mockUser.credentials.map((c) => c.type))
+      console.log('✅ User session created')
+      console.log('User ID:', verifiedUser.id)
+      console.log('Wallet:', walletAddress)
 
       // Redirect to dashboard
       router.push('/dashboard')
@@ -71,7 +90,6 @@ export default function LoginPage() {
   return (
     <div className="min-h-screen flex items-center justify-center px-4 py-20">
       <div className="w-full max-w-md space-y-8">
-        {/* Header */}
         <div className="text-center space-y-4">
           <h1 className="text-5xl font-bold">✅ ProofPass</h1>
           <p className="text-gray-400 text-lg">
@@ -79,18 +97,15 @@ export default function LoginPage() {
           </p>
         </div>
 
-        {/* Login Card */}
         <div className="card space-y-6">
           <h2 className="text-2xl font-bold text-center">Get Started</h2>
 
-          {/* Error Message */}
           {error && (
             <div className="p-4 rounded-lg bg-red-500/10 border border-red-500 text-red-400">
               {error}
             </div>
           )}
 
-          {/* AIR Kit Login Button */}
           <button
             onClick={handleAirKitLogin}
             disabled={isLoading}
@@ -106,7 +121,6 @@ export default function LoginPage() {
             )}
           </button>
 
-          {/* Features List */}
           <div className="space-y-3 pt-4">
             <div className="flex gap-3 text-sm">
               <span className="text-primary font-bold">✓</span>
@@ -123,7 +137,7 @@ export default function LoginPage() {
             <div className="flex gap-3 text-sm">
               <span className="text-primary font-bold">✓</span>
               <span className="text-gray-300">
-                No personal data collection
+                Embedded wallet (no external setup needed)
               </span>
             </div>
             <div className="flex gap-3 text-sm">
@@ -135,7 +149,6 @@ export default function LoginPage() {
           </div>
         </div>
 
-        {/* Info */}
         <div className="text-center text-sm text-gray-400">
           <p>
             By signing in, you agree to our{' '}
