@@ -31,19 +31,33 @@ export default function DashboardPage() {
         }
 
         const user = JSON.parse(userStr)
-        setUserAddress(user.walletAddress)
+        setUserAddress(user.walletAddress || user.abstractAccountAddress)
 
         // Get real credentials from user session
         const realCredentials: Credential[] = (user.credentials || []).map(
-          (cred: any) => ({
-            id: cred.id,
-            type: cred.type,
-            issuer: cred.issuer,
-            holder: user.walletAddress,
-            issuedAt: new Date(cred.issuedAt * 1000).toLocaleDateString(),
-            expiresAt: new Date(cred.expiresAt * 1000).toLocaleDateString(),
-            status: cred.status,
-          })
+          (cred: any) => {
+            // Helper to safely format dates
+            const formatDate = (date: any): string => {
+              if (!date) return 'N/A'
+              try {
+                const dateObj = typeof date === 'number' ? new Date(date * 1000) : new Date(date)
+                const formatted = dateObj.toLocaleDateString()
+                return formatted === 'Invalid Date' ? 'N/A' : formatted
+              } catch {
+                return 'N/A'
+              }
+            }
+
+            return {
+              id: cred.id || cred.credentialId || 'unknown',
+              type: cred.type || cred.credentialType || 'Unknown',
+              issuer: cred.issuer || cred.issuerDid || 'AIR Kit',
+              holder: user.walletAddress || user.abstractAccountAddress || 'Unknown',
+              issuedAt: formatDate(cred.issuedAt),
+              expiresAt: formatDate(cred.expiresAt),
+              status: cred.status || 'Active',
+            }
+          }
         )
 
         setCredentials(realCredentials)

@@ -11,30 +11,7 @@ export default function BuyTicketsPage() {
   const [selectedEvent, setSelectedEvent] = useState<number | null>(null)
   const [credentialProof, setCredentialProof] = useState<string | null>(null)
   const [quantity, setQuantity] = useState(1)
-
-  const events = [
-    {
-      id: 1,
-      name: 'Web3 Summit 2024',
-      price: '0.5',
-      available: 255,
-      image: '🎪',
-    },
-    {
-      id: 2,
-      name: 'NFT Art Showcase',
-      price: '1.0',
-      available: 11,
-      image: '🎨',
-    },
-    {
-      id: 3,
-      name: 'Crypto Music Fest',
-      price: '0.75',
-      available: 433,
-      image: '🎵',
-    },
-  ]
+  const [events] = useState<any[]>([])
 
   const handleVerifyCredential = async () => {
     // In production, this would:
@@ -107,28 +84,38 @@ export default function BuyTicketsPage() {
       {step === 'select' && (
         <div className="space-y-6">
           <h2 className="text-2xl font-bold">Select an Event</h2>
-          <div className="grid md:grid-cols-2 gap-6">
-            {events.map((event) => (
-              <div
-                key={event.id}
-                onClick={() => {
-                  setSelectedEvent(event.id)
-                  handleVerifyCredential()
-                }}
-                className="card hover:border-primary/50 cursor-pointer transition"
-              >
-                <div className="text-5xl mb-4">{event.image}</div>
-                <h3 className="text-xl font-bold mb-2">{event.name}</h3>
-                <div className="space-y-2 text-gray-400 text-sm">
-                  <p>Price: {event.price} ETH</p>
-                  <p>Available: {event.available} tickets</p>
+          {events.length > 0 ? (
+            <div className="grid md:grid-cols-2 gap-6">
+              {events.map((event) => (
+                <div
+                  key={event.id}
+                  onClick={() => {
+                    setSelectedEvent(event.id)
+                    handleVerifyCredential()
+                  }}
+                  className="card hover:border-primary/50 cursor-pointer transition"
+                >
+                  <div className="text-5xl mb-4">{event.image}</div>
+                  <h3 className="text-xl font-bold mb-2">{event.name}</h3>
+                  <div className="space-y-2 text-gray-400 text-sm">
+                    <p>Price: {event.price} ETH</p>
+                    <p>Available: {event.available} tickets</p>
+                  </div>
+                  <button className="btn-primary mt-4 w-full">
+                    Select Event
+                  </button>
                 </div>
-                <button className="btn-primary mt-4 w-full">
-                  Select Event
-                </button>
-              </div>
-            ))}
-          </div>
+              ))}
+            </div>
+          ) : (
+            <div className="card p-12 text-center">
+              <p className="text-gray-400 text-lg mb-4">No events available</p>
+              <p className="text-gray-500 mb-6">Check back later for upcoming events.</p>
+              <a href="/events" className="btn-outline inline-block">
+                Browse Events
+              </a>
+            </div>
+          )}
         </div>
       )}
 

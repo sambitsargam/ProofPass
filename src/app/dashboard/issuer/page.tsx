@@ -17,6 +17,13 @@ export default function IssuerDashboard() {
   })
   const [isSubmitting, setIsSubmitting] = useState(false)
   const [successMessage, setSuccessMessage] = useState<string | null>(null)
+  const [issuedCredentials, setIssuedCredentials] = useState<any[]>([])
+  const [analytics, setAnalytics] = useState({
+    totalIssued: 0,
+    activeCredentials: 0,
+    verifiedUsers: 0,
+    successRate: 100,
+  })
 
   const handleInputChange = (e: React.ChangeEvent<HTMLInputElement | HTMLSelectElement>) => {
     const { name, value } = e.target
@@ -29,23 +36,55 @@ export default function IssuerDashboard() {
     setSuccessMessage(null)
 
     try {
-      // In production, call AIR Kit credential issuance API
-      // const credentialResponse = await airService.issueCredential({
-      //   authToken: jwt,
-      //   credentialId: config.credentialIds[formData.credentialType.toLowerCase()],
-      //   credentialSubject: {
-      //     holderAddress: formData.recipientAddress,
-      //     userName: formData.userName,
-      //     issuedAt: Math.floor(Date.now() / 1000),
-      //   },
-      //   issuerDid: config.issuerDid,
-      // });
+      // Validate form
+      if (!formData.recipientAddress || !formData.userName || !formData.email) {
+        throw new Error('Please fill in all required fields')
+      }
 
-      // Simulate API call
-      await new Promise((resolve) => setTimeout(resolve, 2000))
+      // Call real credential issuance API
+      const response = await fetch('/api/credentials/issue', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json',
+        },
+        body: JSON.stringify({
+          recipientAddress: formData.recipientAddress,
+          credentialType: formData.credentialType,
+          userName: formData.userName,
+          email: formData.email,
+          verificationMethod: formData.verificationMethod,
+        }),
+      })
+
+      if (!response.ok) {
+        const error = await response.json()
+        throw new Error(error.error || 'Failed to issue credential')
+      }
+
+      const result = await response.json()
+
+      // Add to issued credentials list
+      setIssuedCredentials((prev) => [
+        ...prev,
+        {
+          id: result.credentialId,
+          recipient: formData.recipientAddress,
+          type: formData.credentialType === 'HUMAN_VERIFIED' ? 'Human Verified' : 'Fan Badge (VIP)',
+          issued: new Date().toLocaleDateString(),
+          status: 'Active',
+        },
+      ])
+
+      // Update analytics
+      setAnalytics((prev) => ({
+        ...prev,
+        totalIssued: prev.totalIssued + 1,
+        activeCredentials: prev.activeCredentials + 1,
+        verifiedUsers: prev.verifiedUsers + 1,
+      }))
 
       setSuccessMessage(
-        `✅ Credential issued to ${formData.recipientAddress}`
+        `✅ Credential issued successfully!\nID: ${result.credentialId}`
       )
       setFormData({
         recipientAddress: '',
@@ -55,7 +94,9 @@ export default function IssuerDashboard() {
         verificationMethod: '',
       })
     } catch (error) {
-      alert('Failed to issue credential: ' + (error instanceof Error ? error.message : 'Unknown error'))
+      const message = error instanceof Error ? error.message : 'Failed to issue credential'
+      alert(message)
+      console.error('Issuance error:', error)
     } finally {
       setIsSubmitting(false)
     }
@@ -248,7 +289,6 @@ export default function IssuerDashboard() {
       {activeTab === 'issued' && (
         <div className="card">
           <h2 className="text-2xl font-bold mb-6">Issued Credentials</h2>
-
           <table className="w-full text-sm">
             <thead>
               <tr className="border-b border-gray-700">
@@ -259,48 +299,31 @@ export default function IssuerDashboard() {
               </tr>
             </thead>
             <tbody>
-              {[
-                {
-                  recipient: '0x1234...5678',
-                  type: 'Human Verified',
-                  issued: '2024-10-15',
-                  status: 'Active',
-                },
-                {
-                  recipient: '0x9876...5432',
-                  type: 'Fan Badge (VIP)',
-                  issued: '2024-10-14',
-                  status: 'Active',
-                },
-                {
-                  recipient: '0x5678...1234',
-                  type: 'Human Verified',
-                  issued: '2024-10-13',
-                  status: 'Expired',
-                },
-              ].map((cred, idx) => (
-                <tr
-                  key={idx}
-                  className="border-b border-gray-700 hover:bg-gray-800/50 transition"
-                >
-                  <td className="py-3 px-4 font-mono text-primary">
-                    {cred.recipient}
-                  </td>
-                  <td className="py-3 px-4">{cred.type}</td>
-                  <td className="py-3 px-4">{cred.issued}</td>
-                  <td className="py-3 px-4">
-                    <span
-                      className={`px-3 py-1 rounded-full text-xs font-semibold ${
-                        cred.status === 'Active'
-                          ? 'bg-green-500/10 text-green-400'
-                          : 'bg-gray-700 text-gray-400'
-                      }`}
-                    >
-                      {cred.status}
-                    </span>
+              {issuedCredentials.length > 0 ? (
+                issuedCredentials.map((cred, idx) => (
+                  <tr
+                    key={idx}
+                    className="border-b border-gray-700 hover:bg-gray-800/50 transition"
+                  >
+                    <td className="py-3 px-4 font-mono text-primary">
+                      {cred.recipient}
+                    </td>
+                    <td className="py-3 px-4">{cred.type}</td>
+                    <td className="py-3 px-4">{cred.issued}</td>
+                    <td className="py-3 px-4">
+                      <span className="px-3 py-1 rounded-full text-xs font-semibold bg-green-500/10 text-green-400">
+                        {cred.status}
+                      </span>
+                    </td>
+                  </tr>
+                ))
+              ) : (
+                <tr>
+                  <td colSpan={4} className="py-8 text-center text-gray-400">
+                    No credentials issued yet. Start issuing credentials above.
                   </td>
                 </tr>
-              ))}
+              )}
             </tbody>
           </table>
         </div>
@@ -310,10 +333,10 @@ export default function IssuerDashboard() {
       {activeTab === 'analytics' && (
         <div className="grid md:grid-cols-2 lg:grid-cols-4 gap-6">
           {[
-            { label: 'Total Issued', value: '1,234', icon: '📋' },
-            { label: 'Active Credentials', value: '987', icon: '✅' },
-            { label: 'Verified Users', value: '1,100', icon: '👥' },
-            { label: 'Success Rate', value: '99.8%', icon: '📊' },
+            { label: 'Total Issued', value: analytics.totalIssued.toString(), icon: '📋' },
+            { label: 'Active Credentials', value: analytics.activeCredentials.toString(), icon: '✅' },
+            { label: 'Verified Users', value: analytics.verifiedUsers.toString(), icon: '👥' },
+            { label: 'Success Rate', value: analytics.successRate + '%', icon: '📊' },
           ].map((stat, idx) => (
             <div key={idx} className="card text-center">
               <div className="text-4xl mb-2">{stat.icon}</div>
