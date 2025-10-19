@@ -1,0 +1,92 @@
+@tailwind base;
+@tailwind components;
+@tailwind utilities;
+
+* {
+  margin: 0;
+  padding: 0;
+  box-sizing: border-box;
+}
+
+html {
+  scroll-behavior: smooth;
+}
+
+body {
+  @apply bg-gray-900 text-gray-100 font-sans antialiased;
+}
+
+/* Custom scrollbar */
+::-webkit-scrollbar {
+  width: 8px;
+  height: 8px;
+}
+
+::-webkit-scrollbar-track {
+  @apply bg-gray-800;
+}
+
+::-webkit-scrollbar-thumb {
+  @apply bg-primary rounded-full hover:bg-primary/80;
+}
+
+/* Utility classes */
+.gradient-primary {
+  @apply bg-gradient-to-r from-primary via-secondary to-accent;
+}
+
+.gradient-text {
+  @apply bg-clip-text text-transparent gradient-primary;
+}
+
+.card {
+  @apply bg-gray-800 border border-gray-700 rounded-lg p-6;
+}
+
+.btn-primary {
+  @apply px-4 py-2 bg-primary text-white rounded-lg font-semibold hover:bg-primary/90 transition disabled:opacity-50 disabled:cursor-not-allowed;
+}
+
+.btn-secondary {
+  @apply px-4 py-2 bg-secondary text-white rounded-lg font-semibold hover:bg-secondary/90 transition;
+}
+
+.btn-outline {
+  @apply px-4 py-2 border-2 border-primary text-primary rounded-lg font-semibold hover:bg-primary hover:text-white transition;
+}
+
+.input-field {
+  @apply w-full px-4 py-2 bg-gray-800 border border-gray-700 rounded-lg text-white placeholder-gray-400 focus:outline-none focus:border-primary transition;
+}
+
+.badge {
+  @apply inline-flex items-center px-3 py-1 rounded-full text-sm font-semibold bg-gray-800 border border-gray-700;
+}
+
+.badge-primary {
+  @apply badge border-primary text-primary;
+}
+
+.badge-green {
+  @apply badge border-green-500 text-green-400;
+}
+
+.badge-red {
+  @apply badge border-red-500 text-red-400;
+}
+
+/* Loading animation */
+@keyframes pulse-glow {
+  0%, 100% {
+    opacity: 1;
+    box-shadow: 0 0 20px rgba(99, 102, 241, 0.5);
+  }
+  50% {
+    opacity: 0.8;
+    box-shadow: 0 0 30px rgba(99, 102, 241, 0.8);
+  }
+}
+
+.pulse-glow {
+  animation: pulse-glow 2s cubic-bezier(0.4, 0, 0.6, 1) infinite;
+}
