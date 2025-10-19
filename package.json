@@ -8,7 +8,8 @@
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "type-check": "tsc --noEmit"
+    "type-check": "tsc --noEmit",
+    "create-events": "node create-events.js"
   },
   "dependencies": {
     "@mocanetwork/airkit": "^1.6.0",

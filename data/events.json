@@ -1,0 +1,50 @@
+[
+  {
+    "id": "event_1760871380733",
+    "name": "Web3 Summit 2024",
+    "totalTickets": 500,
+    "soldTickets": 0,
+    "pricePerTicket": 0.5,
+    "description": "Annual Web3 conference with top keynote speakers",
+    "createdAt": "2025-10-19T10:56:20.733Z",
+    "organizer": "0x90D9CD66FAdFF1C2Ba32C99A47C76532d08A704B",
+    "requiredCredential": "HUMAN_VERIFIED",
+    "contractAddress": "0x88f155b4e2e95dbcccec21ead02a77adc88432ef",
+    "metadata": {
+      "location": "Virtual",
+      "image": "🎪"
+    }
+  },
+  {
+    "id": "event_1760871380740",
+    "name": "NFT Art Showcase",
+    "totalTickets": 200,
+    "soldTickets": 0,
+    "pricePerTicket": 1,
+    "description": "Exclusive digital art exhibition and auction",
+    "createdAt": "2025-10-19T10:56:20.740Z",
+    "organizer": "0x90D9CD66FAdFF1C2Ba32C99A47C76532d08A704B",
+    "requiredCredential": "HUMAN_VERIFIED",
+    "contractAddress": "0x88f155b4e2e95dbcccec21ead02a77adc88432ef",
+    "metadata": {
+      "location": "Virtual",
+      "image": "🎪"
+    }
+  },
+  {
+    "id": "event_1760871380743",
+    "name": "Crypto Music Fest",
+    "totalTickets": 1000,
+    "soldTickets": 0,
+    "pricePerTicket": 0.75,
+    "description": "Electronic music festival with blockchain integration",
+    "createdAt": "2025-10-19T10:56:20.743Z",
+    "organizer": "0x90D9CD66FAdFF1C2Ba32C99A47C76532d08A704B",
+    "requiredCredential": "HUMAN_VERIFIED",
+    "contractAddress": "0x88f155b4e2e95dbcccec21ead02a77adc88432ef",
+    "metadata": {
+      "location": "Virtual",
+      "image": "🎪"
+    }
+  }
+]
