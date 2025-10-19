@@ -6,7 +6,7 @@ import { useState } from 'react'
  * Ticket Purchase & Credential Verification
  * User flows for buying tickets with credential proof
  */
-export default function VerifyCredentialPage() {
+export default function BuyTicketsPage() {
   const [step, setStep] = useState<'select' | 'verify' | 'purchase' | 'success'>('select')
   const [selectedEvent, setSelectedEvent] = useState<number | null>(null)
   const [credentialProof, setCredentialProof] = useState<string | null>(null)

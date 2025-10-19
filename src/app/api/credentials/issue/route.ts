@@ -4,7 +4,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json()
 
-    const { recipientAddress, credentialType, credentialSubject } = body
+    const { recipientAddress, credentialType } = body
 
     // In production:
     // 1. Validate JWT token

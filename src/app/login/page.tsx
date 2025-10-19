@@ -1,46 +1,68 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState } from 'react'
+import { useRouter } from 'next/navigation'
 
 /**
  * AIR Kit Login Component
- * Implements SSO login flow with AIR Kit
+ * Implements SSO login flow with AIR Kit for human verification
  */
 export default function LoginPage() {
   const [isLoading, setIsLoading] = useState(false)
   const [error, setError] = useState<string | null>(null)
-  const [isLoggedIn, setIsLoggedIn] = useState(false)
+  const router = useRouter()
 
   const handleAirKitLogin = async () => {
     setIsLoading(true)
     setError(null)
 
     try {
-      // In production, initialize AIR Kit service here
-      // const airService = getAirService();
-      // const result = await airService.login();
-      
-      // Placeholder for AIR Kit login flow
+      // In production: Use real AIR Kit SDK
+      // import { AirKit } from '@mocanetwork/airkit';
+      // const airkit = new AirKit({
+      //   partnerId: process.env.NEXT_PUBLIC_AIR_KIT_PARTNER_ID,
+      //   env: 'SANDBOX'
+      // });
+      // const result = await airkit.startSSO();
+
+      // For MVP: Simulate AIR Kit login
+      console.log('🔐 Initiating AIR Kit SSO...')
+
+      // Simulate AIR Kit SSO flow
+      await new Promise((resolve) => setTimeout(resolve, 1500))
+
+      // Create mock user with verified credential
       const mockUser = {
         id: 'user_' + Math.random().toString(36).substr(2, 9),
-        walletAddress: '0x' + Math.random().toString(16).substr(2),
+        walletAddress: '0x' + Math.random().toString(16).substr(2, 40),
         sessionToken: 'session_' + Date.now(),
-        credentials: [],
+        credentials: [
+          {
+            id: 'cred_human_verified',
+            type: 'HUMAN_VERIFIED',
+            issuer: 'AIR Kit',
+            issuedAt: Math.floor(Date.now() / 1000),
+            expiresAt: Math.floor(Date.now() / 1000) + 365 * 24 * 60 * 60,
+            status: 'active',
+          },
+        ],
         createdAt: Date.now(),
       }
 
       // Store user session
       localStorage.setItem('proofpass_user', JSON.stringify(mockUser))
-      setIsLoggedIn(true)
+
+      console.log('✅ AIR Kit verification complete')
+      console.log('User wallet:', mockUser.walletAddress)
+      console.log('Credentials:', mockUser.credentials.map((c) => c.type))
 
       // Redirect to dashboard
-      window.location.href = '/dashboard'
+      router.push('/dashboard')
     } catch (err) {
-      setError(
-        err instanceof Error
-          ? err.message
-          : 'Login failed. Please try again.'
-      )
+      const message =
+        err instanceof Error ? err.message : 'Login failed. Please try again.'
+      setError(message)
+      console.error('AIR Kit login error:', err)
     } finally {
       setIsLoading(false)
     }
@@ -68,7 +90,7 @@ export default function LoginPage() {
             </div>
           )}
 
-          {/* AIR Kit Login */}
+          {/* AIR Kit Login Button */}
           <button
             onClick={handleAirKitLogin}
             disabled={isLoading}
@@ -77,7 +99,7 @@ export default function LoginPage() {
             {isLoading ? (
               <span className="inline-flex items-center gap-2">
                 <span className="inline-block w-4 h-4 rounded-full border-2 border-white/30 border-t-white animate-spin"></span>
-                Connecting...
+                Verifying with AIR Kit...
               </span>
             ) : (
               '🔐 Sign in with AIR Kit'
@@ -102,6 +124,12 @@ export default function LoginPage() {
               <span className="text-primary font-bold">✓</span>
               <span className="text-gray-300">
                 No personal data collection
+              </span>
+            </div>
+            <div className="flex gap-3 text-sm">
+              <span className="text-primary font-bold">✓</span>
+              <span className="text-gray-300">
+                Prove humanity, prevent bot attacks
               </span>
             </div>
           </div>

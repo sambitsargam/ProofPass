@@ -1,12 +1,10 @@
 'use client'
 
-import { useState } from 'react'
-
 /**
  * Events Listing Page
  */
 export default function EventsPage() {
-  const [events, setEvents] = useState([
+  const events = [
     {
       id: 1,
       name: 'Web3 Summit 2024',
@@ -40,7 +38,7 @@ export default function EventsPage() {
       requiredCredential: 'HUMAN_VERIFIED',
       description: 'Electronic music festival with blockchain integration',
     },
-  ])
+  ]
 
   return (
     <div className="py-20 space-y-12">

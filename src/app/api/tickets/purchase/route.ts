@@ -4,7 +4,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json()
 
-    const { eventId, quantity, credentialHash, buyerAddress } = body
+    const { eventId, quantity, buyerAddress } = body
 
     // In production:
     // 1. Verify credential proof
@@ -13,7 +13,7 @@ export async function POST(request: Request) {
     // 4. Process payment
     // 5. Record transaction
 
-    const ticketIds = Array.from({ length: quantity }, (_, i) =>
+    const ticketIds = Array.from({ length: quantity }, () =>
       Math.random().toString(36).substr(2, 9)
     )
 

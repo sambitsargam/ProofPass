@@ -1,11 +1,8 @@
 'use client'
 
-import { useState } from 'react'
 import Link from 'next/link'
 
 export default function Home() {
-  const [email, setEmail] = useState('')
-
   const handleDemo = async () => {
     // Placeholder for demo flow
     alert('Demo flow - Redirect to AIR Kit login')
