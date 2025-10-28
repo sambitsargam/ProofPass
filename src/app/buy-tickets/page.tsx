@@ -10,7 +10,10 @@ export default function BuyTicketsPage() {
   const [step, setStep] = useState<'select' | 'verify' | 'purchase' | 'success'>('select')
   const [selectedEvent, setSelectedEvent] = useState<number | null>(null)
   const [credentialProof, setCredentialProof] = useState<string | null>(null)
+  const [perks, setPerks] = useState<any[]>([])
+  const [selectedPerk, setSelectedPerk] = useState<any | null>(null)
   const [quantity, setQuantity] = useState(1)
+  const [purchaseResult, setPurchaseResult] = useState<any | null>(null)
   const [events] = useState<any[]>([])
 
   const handleVerifyCredential = async () => {
@@ -25,19 +28,56 @@ export default function BuyTicketsPage() {
     await new Promise((resolve) => setTimeout(resolve, 2000))
 
     // Mock credential proof
-    setCredentialProof(
-      'zk_proof_' + Math.random().toString(36).substr(2, 9)
-    )
+    const proof = 'zk_proof_' + Math.random().toString(36).substr(2, 9)
+    setCredentialProof(proof)
+    // After setting a mock proof, attempt to fetch perks for this credential
     setStep('purchase')
+    // Fire-and-forget: fetch perks and attach to UI using the newly-created proof
+    ;(async () => {
+      try {
+        const res = await fetch('/api/credentials/perks', {
+          method: 'POST',
+          headers: { 'Content-Type': 'application/json' },
+          body: JSON.stringify({ credentialId: proof, walletAddress: '' }),
+        })
+        if (res.ok) {
+          const data = await res.json()
+          if (data?.perks && data.perks.length > 0) {
+            setPerks(data.perks)
+            setSelectedPerk(data.perks[0])
+          }
+        }
+      } catch (e) {
+        // ignore for demo
+      }
+    })()
   }
 
   const handlePurchaseTicket = async () => {
     if (!credentialProof || !selectedEvent) return
 
-    // In production, this would:
-    // 1. Call smart contract with credential hash
-    // 2. Mint NFT tickets
-    // 3. Process payment
+    // Call backend purchase API (mocked) and pass applied perk if any
+    try {
+      const res = await fetch('/api/tickets/purchase', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({
+          eventId: selectedEvent,
+          quantity,
+          buyerAddress: '',
+          appliedPerk: selectedPerk || null,
+        }),
+      })
+      if (res.ok) {
+        const data = await res.json()
+        // store purchase details locally for success screen
+        setPurchaseResult(data)
+        setStep('success')
+        return
+      }
+    } catch (e) {
+      // ignore and fall back to success for demo
+    }
 
     setStep('success')
   }
@@ -170,6 +210,29 @@ export default function BuyTicketsPage() {
             })()}
           </div>
 
+          {/* Perks / Discounts */}
+          {perks.length > 0 && (
+            <div className="p-4 rounded-lg bg-blue-900/10 border border-blue-800 space-y-3">
+              <h3 className="font-semibold">Available Perks</h3>
+              {perks.map((p) => (
+                <div key={p.id} className="flex items-center justify-between">
+                  <div>
+                    <div className="font-semibold">{p.title}</div>
+                    <div className="text-sm text-gray-400">{p.description}</div>
+                  </div>
+                  <div>
+                    <button
+                      onClick={() => setSelectedPerk(p)}
+                      className={`btn-outline ml-4 ${selectedPerk?.id === p.id ? 'bg-primary text-white' : ''}`}
+                    >
+                      Apply
+                    </button>
+                  </div>
+                </div>
+              ))}
+            </div>
+          )}
+
           {/* Quantity Selection */}
           <div>
             <label className="block text-sm font-semibold mb-2">
@@ -200,14 +263,18 @@ export default function BuyTicketsPage() {
           {/* Total */}
           {(() => {
             const event = events.find((e) => e.id === selectedEvent)
-            const total =
-              quantity * (parseFloat(event?.price || '0'))
+            const rawTotal = quantity * (parseFloat(event?.price || '0'))
+            const discount = selectedPerk ? (rawTotal * (selectedPerk.discountPercent || 0)) / 100 : 0
+            const total = rawTotal - discount
             return (
               <div className="p-4 rounded-lg bg-primary/10 border border-primary space-y-2">
                 <div className="flex justify-between text-lg font-bold">
                   <span>Total:</span>
                   <span>{total.toFixed(2)} ETH</span>
                 </div>
+                {selectedPerk && (
+                  <div className="text-sm text-gray-400">Applied: {selectedPerk.title} — {selectedPerk.discountPercent}% off</div>
+                )}
               </div>
             )
           })()}
@@ -242,12 +309,12 @@ export default function BuyTicketsPage() {
             <div className="flex justify-between">
               <span className="text-gray-400">Transaction:</span>
               <span className="font-mono text-sm text-primary">
-                0x1234...5678
+                {purchaseResult?.transactionHash || '0x1234...5678'}
               </span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">Tickets:</span>
-              <span className="font-semibold">{quantity} NFTs</span>
+              <span className="font-semibold">{purchaseResult?.ticketCount || quantity} NFTs</span>
             </div>
             <div className="flex justify-between">
               <span className="text-gray-400">Status:</span>

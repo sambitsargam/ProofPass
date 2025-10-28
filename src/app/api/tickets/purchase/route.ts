@@ -4,7 +4,7 @@ export async function POST(request: Request) {
   try {
     const body = await request.json()
 
-    const { eventId, quantity, buyerAddress } = body
+  const { eventId, quantity, buyerAddress, appliedPerk } = body
 
     // In production:
     // 1. Verify credential proof
@@ -17,6 +17,12 @@ export async function POST(request: Request) {
       Math.random().toString(36).substr(2, 9)
     )
 
+    // Apply perk discount if present
+    const unitPrice = 0.5
+    const discountPercent = appliedPerk?.discountPercent || 0
+    const rawTotal = quantity * unitPrice
+    const totalPrice = rawTotal - rawTotal * (discountPercent / 100)
+
     const purchaseResult = {
       success: true,
       orderId: 'order_' + Math.random().toString(36).substr(2, 9),
@@ -25,8 +31,9 @@ export async function POST(request: Request) {
       ticketCount: quantity,
       ticketIds,
       transactionHash: '0x' + Math.random().toString(16).substr(2, 64),
-      totalPrice: (quantity * 0.5).toString(),
+      totalPrice: totalPrice.toFixed(4).toString(),
       purchasedAt: new Date().toISOString(),
+      appliedPerk: appliedPerk || null,
     }
 
     return new Response(JSON.stringify(purchaseResult), {
